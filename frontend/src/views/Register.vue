@@ -1,52 +1,62 @@
 <template>
-  <div class="register-container">
-    <div class="register-box">
-      <h2>注册账号</h2>
-      <form @submit.prevent="handleRegister" class="register-form">
-        <div class="form-group">
-          <label for="username">用户名</label>
+  <div class="min-h-screen w-full flex flex-col items-center justify-center bg-white px-4">
+    <!-- Logo -->
+    <div class="mb-16">
+      <h1 class="text-4xl font-bold tracking-tighter">OI</h1>
+    </div>
+    
+    <!-- Register Card -->
+    <div class="w-full max-w-sm">
+      <h2 class="text-xl font-semibold text-center mb-6">Create Account</h2>
+      <form @submit.prevent="handleRegister" class="space-y-4">
+        <div class="space-y-2">
           <input
             id="username"
             v-model="formData.username"
             type="text"
-            placeholder="请输入用户名"
-            required
+            placeholder="Username"
+            class="w-full h-12 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
           />
-          <span class="error-message" v-if="errors.username">{{ errors.username }}</span>
+          <span v-if="errors.username" class="text-red-500 text-sm">{{ errors.username }}</span>
         </div>
-
-        <div class="form-group">
-          <label for="email">邮箱</label>
+        
+        <div class="space-y-2">
           <input
             id="email"
             v-model="formData.email"
             type="email"
-            placeholder="请输入邮箱"
-            required
+            placeholder="Email"
+            class="w-full h-12 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
           />
-          <span class="error-message" v-if="errors.email">{{ errors.email }}</span>
+          <span v-if="errors.email" class="text-red-500 text-sm">{{ errors.email }}</span>
         </div>
 
-        <div class="form-group">
-          <label for="password">密码</label>
+        <div class="space-y-2">
           <input
             id="password"
             v-model="formData.password"
             type="password"
-            placeholder="请输入密码"
-            required
+            placeholder="Password"
+            class="w-full h-12 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
           />
-          <span class="error-message" v-if="errors.password">{{ errors.password }}</span>
+          <span v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</span>
         </div>
 
-        <button type="submit" :disabled="isLoading">
-          {{ isLoading ? '注册中...' : '注册' }}
+        <button 
+          type="submit"
+          :disabled="isLoading"
+          class="w-full h-12 rounded-lg bg-black text-white hover:bg-gray-800 transition duration-300 ease-in-out disabled:bg-gray-400"
+        >
+          {{ isLoading ? 'Creating Account...' : 'Sign Up' }}
         </button>
-
-        <p class="login-link">
-          已有账号？<router-link to="/login">立即登录</router-link>
-        </p>
       </form>
+      
+      <div class="mt-6 text-center text-sm">
+        <span class="text-gray-600">Already have an account? </span>
+        <router-link to="/login" class="text-black hover:text-gray-800 font-medium">
+          Sign in
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -132,95 +142,175 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-.register-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.min-h-screen {
   min-height: 100vh;
-  background-color: #f5f5f5;
 }
 
-.register-box {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+.w-full {
   width: 100%;
+}
+
+.max-w-sm {
   max-width: 400px;
 }
 
-h2 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 2rem;
-}
-
-.register-form {
+.flex {
   display: flex;
+}
+
+.flex-col {
   flex-direction: column;
-  gap: 1.5rem;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.items-center {
+  align-items: center;
 }
 
-label {
-  color: #666;
-  font-size: 0.9rem;
+.justify-center {
+  justify-content: center;
 }
 
-input {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+.bg-white {
+  background-color: #fff;
 }
 
-input:focus {
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.mb-16 {
+  margin-bottom: 4rem;
+}
+
+.text-4xl {
+  font-size: 2.25rem;
+}
+
+.font-bold {
+  font-weight: bold;
+}
+
+.tracking-tighter {
+  letter-spacing: -0.025em;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.max-w-sm {
+  max-width: 400px;
+}
+
+.space-y-4 {
+  gap: 1rem;
+}
+
+.h-12 {
+  height: 3rem;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.border {
+  border-width: 1px;
+}
+
+.border-gray-200 {
+  border-color: #e5e5e5;
+}
+
+.focus\:outline-none:focus {
   outline: none;
-  border-color: #4a90e2;
 }
 
-button {
-  background-color: #4a90e2;
-  color: white;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
+.focus\:ring-2:focus {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #4a90e2;
 }
 
-button:hover {
-  background-color: #357abd;
+.focus\:ring-black:focus {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000;
 }
 
-button:disabled {
+.text-red-500 {
+  color: #dc3545;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-12 {
+  height: 3rem;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.bg-black {
+  background-color: #000;
+}
+
+.text-white {
+  color: #fff;
+}
+
+.hover\:bg-gray-800:hover {
+  background-color: #333;
+}
+
+.transition {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.ease-in-out {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.disabled\:bg-gray-400:disabled {
   background-color: #ccc;
-  cursor: not-allowed;
 }
 
-.error-message {
-  color: #ff4d4f;
-  font-size: 0.8rem;
+.mt-6 {
+  margin-top: 1.5rem;
 }
 
-.login-link {
+.text-center {
   text-align: center;
-  font-size: 0.9rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-gray-600 {
   color: #666;
 }
 
-.login-link a {
-  color: #4a90e2;
-  text-decoration: none;
+.hover\:text-gray-800:hover {
+  color: #333;
 }
 
-.login-link a:hover {
-  text-decoration: underline;
+.font-medium {
+  font-weight: 500;
 }
 </style>
