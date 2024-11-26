@@ -51,12 +51,21 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const email = ref('')
 const password = ref('')
 
-const handleSubmit = () => {
-  // Here you would typically handle the login logic
-  console.log('Login attempt with:', { email: email.value, password: password.value })
+const handleSubmit = async () => {
+  try {
+    // Here you would typically handle the login logic
+    console.log('Login attempt with:', { email: email.value, password: password.value })
+    
+    // After successful login, navigate to ChatInterview
+    await router.push('/chatInterview')
+  } catch (error) {
+    console.error('Login error:', error)
+  }
 }
 </script>
