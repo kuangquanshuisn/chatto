@@ -51,12 +51,19 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const email = ref('')
 const password = ref('')
 
-const handleSubmit = () => {
-  // Here you would typically handle the login logic
+const handleSubmit = async () => {
   console.log('Login attempt with:', { email: email.value, password: password.value })
+  
+  // 模拟登录延迟
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  // 模拟登录成功，跳转到聊天页面
+  router.push('/chat')
 }
 </script>
