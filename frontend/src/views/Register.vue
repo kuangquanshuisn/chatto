@@ -140,17 +140,3 @@ const handleRegister = async () => {
   }
 };
 </script>
-
-<style scoped>
-.focus\:outline-none:focus {
-  outline: none;
-}
-
-.focus\:ring-2:focus {
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #4a90e2;
-}
-
-.focus\:ring-black:focus {
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000;
-}
-</style>
