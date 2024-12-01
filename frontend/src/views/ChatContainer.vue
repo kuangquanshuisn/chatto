@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col h-screen">
+  <div class="flex flex-col h-[100dvh]">
     <!-- Header -->
-    <header class="border-b border-gray-200">
+    <header class="flex-none border-b border-gray-200">
       <div class="flex items-center justify-between px-4 py-2">
         <div class="flex items-center space-x-2 relative">
           <button 
@@ -41,7 +41,7 @@
       </div>
     </header>
 
-    <div class="flex-1 overflow-y-auto bg-gray-50">
+    <div class="flex-1 overflow-y-auto bg-gray-50 min-h-0">
       <Message
         v-for="message in messages"
         :key="message.id"
@@ -51,7 +51,10 @@
       />
       <div ref="messagesEndRef" />
     </div>
-    <ChatInput :onSendMessage="handleSendMessage" />
+
+    <div class="flex-none">
+      <ChatInput :onSendMessage="handleSendMessage" />
+    </div>
   </div>
 </template>
 
