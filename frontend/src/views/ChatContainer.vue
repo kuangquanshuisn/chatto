@@ -22,7 +22,7 @@
               v-for="model in models"
               :key="model"
               @click="selectModel(model)"
-              class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between"
+              class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center justify-between"
               :class="{ 'bg-gray-50': model === selectedModel }"
             >
               <span>{{ model }}</span>
@@ -30,12 +30,35 @@
             </button>
           </div>
         </div>
-        <div class="flex items-center space-x-2">
-          <button class="p-2 hover:bg-gray-100 rounded-lg">
+        <div class="flex items-center space-x-2 relative">
+          <button 
+            class="p-2 hover:bg-gray-100 rounded-lg"
+          >
             <PencilSquareIcon class="h-5 w-5 text-gray-500" />
           </button>
-          <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white">
+          <div  @click="isAvatarMenuOpen = !isAvatarMenuOpen" 
+                class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white">
             U
+          </div>
+
+          <!-- Avatar Menu Popup -->
+          <div 
+            v-if="isAvatarMenuOpen"
+            class="absolute top-full right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+            @click.stop
+          >
+            <button class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center">
+              <StarIcon class="h-5 w-5 text-gray-500 mr-2" />
+              积分
+            </button>
+            <button class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center">
+              <UserIcon class="h-5 w-5 text-gray-500 mr-2" />
+              我的
+            </button>
+            <button class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center">
+              <ArrowLeftIcon class="h-5 w-5 text-gray-500 mr-2" />
+              退出
+            </button>
           </div>
         </div>
       </div>
@@ -62,7 +85,7 @@
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import Message from '../components/Message.vue';
 import ChatInput from '../components/ChatInput.vue';
-import { ChevronDownIcon, PencilSquareIcon, CheckIcon } from '@heroicons/vue/24/outline';
+import { ChevronDownIcon, PencilSquareIcon, CheckIcon, StarIcon, UserIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline';
 
 interface ChatMessage {
   id: string;
@@ -74,21 +97,32 @@ interface ChatMessage {
 const models = ['gpt-4o', 'gemini', 'qwen2.5'];
 const selectedModel = ref('gpt-4o');
 const isModelSelectOpen = ref(false);
+const isAvatarMenuOpen = ref(false); // 新增状态
 
 const selectModel = (model: string) => {
   selectedModel.value = model;
   isModelSelectOpen.value = false;
 };
 
-// Close model selection when clicking outside
+// Code for mouse click outside to close dropdowns
 const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  
   if (isModelSelectOpen.value) {
-    const target = event.target as HTMLElement;
     const button = document.querySelector('.model-select-button');
     const popup = document.querySelector('.model-select-popup');
-    
+
     if (!button?.contains(target) && !popup?.contains(target)) {
       isModelSelectOpen.value = false;
+    }
+  }
+  
+  if (isAvatarMenuOpen.value) {
+    const avatarButton = document.querySelector('.avatar-menu-button');
+    const menuPopup = document.querySelector('.avatar-menu-popup');
+
+    if (!avatarButton?.contains(target) && !menuPopup?.contains(target)) {
+      isAvatarMenuOpen.value = false;
     }
   }
 };
@@ -101,6 +135,7 @@ onUnmounted(() => {
   document.removeEventListener('mousedown', handleClickOutside);
 });
 
+// Remaining code unchanged
 const messages = ref<ChatMessage[]>([]);
 const messagesEndRef = ref<HTMLDivElement | null>(null);
 
