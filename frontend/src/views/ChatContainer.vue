@@ -22,7 +22,7 @@
               v-for="model in models"
               :key="model"
               @click="selectModel(model)"
-              class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center justify-between"
+              class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between"
               :class="{ 'bg-gray-50': model === selectedModel }"
             >
               <span>{{ model }}</span>
@@ -47,15 +47,15 @@
             class="absolute top-full right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
             @click.stop
           >
-            <button class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center">
+            <button class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center">
               <StarIcon class="h-5 w-5 text-gray-500 mr-2" />
               积分
             </button>
-            <button class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center">
+            <button class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center">
               <UserIcon class="h-5 w-5 text-gray-500 mr-2" />
               我的
             </button>
-            <button class="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center">
+            <button class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center">
               <ArrowLeftIcon class="h-5 w-5 text-gray-500 mr-2" />
               退出
             </button>
