@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col h-[100dvh]">
-    <!-- Header -->
+    <!-- 头部 -->
     <header class="flex-none border-b border-gray-200">
       <div class="flex items-center justify-between px-4 py-2">
         <div class="flex items-center space-x-2 relative">
@@ -12,7 +12,7 @@
             <ChevronDownIcon class="h-4 w-4 text-gray-500" />
           </button>
 
-          <!-- Model Selection Popup -->
+          <!-- 模型选择弹窗 -->
           <div 
             v-if="isModelSelectOpen"
             v-on-click-outside="() => isModelSelectOpen = false"
@@ -43,7 +43,7 @@
             U
           </div>
 
-          <!-- Avatar Menu Popup -->
+          <!-- 头像菜单弹窗 -->
           <div 
             v-if="isAvatarMenuOpen"
             v-on-click-outside="() => isAvatarMenuOpen = false"
@@ -119,7 +119,6 @@ const handleLogout = () => {
   isAvatarMenuOpen.value = false;
 };
 
-// Remaining code unchanged
 const messages = ref<ChatMessage[]>([]);
 const messagesEndRef = ref<HTMLDivElement | null>(null);
 
