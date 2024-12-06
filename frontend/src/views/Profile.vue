@@ -58,7 +58,7 @@
         <!-- 重置密码按钮 -->
         <div class="flex justify-center mt-6">
           <button
-            @click="handleResetPassword"
+            @click="showResetPasswordModal = true"
             class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
           >
             重置密码
@@ -66,13 +66,23 @@
         </div>
       </div>
     </div>
+
+    <!-- 重置密码弹出框 -->
+    <ResetPasswordModal 
+      :show="showResetPasswordModal" 
+      @close="showResetPasswordModal = false"
+      @success="handleResetSuccess"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import ResetPasswordModal from '../components/ResetPasswordModal.vue'
 
 const maxPoints = 1000
+const showResetPasswordModal = ref(false)
+
 const userInfo = ref({
   username: '张三',
   phone: '138****8888',
@@ -82,9 +92,9 @@ const userInfo = ref({
   membershipExpiry: '' // 如果是付费会员，这里可以显示到期时间
 })
 
-const handleResetPassword = () => {
-  // TODO: 实现密码重置逻辑
-  alert('即将跳转到密码重置页面')
+const handleResetSuccess = () => {
+  // 密码重置成功后的处理
+  alert('密码重置成功！')
 }
 
 onMounted(async () => {
