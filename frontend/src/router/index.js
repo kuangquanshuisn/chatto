@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Register from '../views/Register.vue';
 import LoginPage from '../views/LoginPage.vue';
 import ChatContainer from '../views/ChatContainer.vue';
+import Profile from '../views/Profile.vue';
 
 const routes = [
   {
@@ -22,6 +23,11 @@ const routes = [
     path: '/chat',
     name: 'Chat',
     component: ChatContainer
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: Profile
   }
 ];
 

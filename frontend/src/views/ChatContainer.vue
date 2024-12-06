@@ -53,7 +53,10 @@
               <StarIcon class="h-5 w-5 text-gray-500 mr-2" />
               积分
             </button>
-            <button class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center">
+            <button 
+              @click="handleProfile"
+              class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center"
+            >
               <UserIcon class="h-5 w-5 text-gray-500 mr-2" />
               我的
             </button>
@@ -118,6 +121,11 @@ const handleLogout = () => {
   router.push('/login');
   isAvatarMenuOpen.value = false;
 };
+
+const handleProfile = () => {
+  router.push('/profile');
+  isAvatarMenuOpen.value = false;
+}
 
 const messages = ref<ChatMessage[]>([]);
 const messagesEndRef = ref<HTMLDivElement | null>(null);
