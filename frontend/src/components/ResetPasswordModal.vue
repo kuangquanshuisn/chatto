@@ -10,35 +10,31 @@
           
           <form @submit.prevent="handleSubmit" class="space-y-4">
             <!-- 手机号码 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700">手机号码</label>
-              <div class="mt-1">
-                <input
-                  type="tel"
-                  v-model="form.phone"
-                  class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2"
-                  placeholder="请输入手机号码"
-                  required
-                />
-              </div>
+            <div class="space-y-2">
+              <input
+                type="tel"
+                v-model="form.phone"
+                class="w-full h-12 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
+                placeholder="手机号码"
+                required
+              />
             </div>
 
             <!-- 验证码 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700">验证码</label>
-              <div class="mt-1 flex space-x-2">
+            <div class="space-y-2">
+              <div class="flex space-x-2">
                 <input
                   type="text"
                   v-model="form.verificationCode"
-                  class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2"
-                  placeholder="请输入验证码"
+                  class="w-full h-12 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
+                  placeholder="验证码"
                   required
                 />
                 <button
                   type="button"
                   @click="handleSendCode"
                   :disabled="countdown > 0"
-                  class="inline-flex items-center px-4 whitespace-nowrap min-w-[120px] h-[38px] border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="px-6 h-12 whitespace-nowrap border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {{ countdown > 0 ? `${countdown}s后重新发送` : '获取验证码' }}
                 </button>
@@ -46,50 +42,47 @@
             </div>
 
             <!-- 新密码 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700">新密码</label>
-              <div class="mt-1">
-                <input
-                  type="password"
-                  v-model="form.newPassword"
-                  class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2"
-                  placeholder="请输入新密码"
-                  required
-                />
-              </div>
+            <div class="space-y-2">
+              <input
+                type="password"
+                v-model="form.newPassword"
+                class="w-full h-12 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
+                placeholder="新密码"
+                required
+              />
             </div>
 
             <!-- 确认新密码 -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700">确认新密码</label>
-              <div class="mt-1">
-                <input
-                  type="password"
-                  v-model="form.confirmPassword"
-                  class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2"
-                  placeholder="请再次输入新密码"
-                  required
-                />
-              </div>
+            <div class="space-y-2">
+              <input
+                type="password"
+                v-model="form.confirmPassword"
+                class="w-full h-12 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
+                placeholder="确认新密码"
+                required
+              />
+            </div>
+
+            <!-- 按钮组 -->
+            <div class="flex justify-center gap-4 mt-6">
+              <button
+                type="button"
+                @click="$emit('close')"
+                class="w-1/2 h-12 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black transition duration-300 ease-in-out"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                class="w-1/2 h-12 rounded-lg bg-black text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black transition duration-300 ease-in-out"
+              >
+                确认
+              </button>
             </div>
           </form>
         </div>
 
         <div class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-center space-x-4">
-          <button
-            type="button"
-            @click="handleSubmit"
-            class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-6 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm"
-          >
-            确认
-          </button>
-          <button
-            type="button"
-            @click="$emit('close')"
-            class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-6 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:text-sm"
-          >
-            取消
-          </button>
         </div>
       </div>
     </div>
