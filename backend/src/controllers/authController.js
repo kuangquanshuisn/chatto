@@ -1,56 +1,209 @@
 const User = require('../models/User');
-const { validateEmail, validatePassword } = require('../utils/validators');
+const codeStorage = require('../utils/codeStorage');
+const { generateToken } = require('../utils/jwt');
+const { Op } = require('sequelize');
 
+// 发送验证码
+exports.sendVerificationCode = async (req, res) => {
+  try {
+    const { phone } = req.body;
+
+    // 验证手机号格式
+    if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: '请输入正确的手机号码',
+        field: 'phone'
+      });
+    }
+
+    // 检查手机号是否已被注册
+    const existingPhone = await User.findOne({ where: { phone } });
+    if (existingPhone) {
+      return res.status(400).json({
+        success: false,
+        message: '该手机号已被注册',
+        field: 'phone'
+      });
+    }
+
+    // 生成验证码
+    const code = codeStorage.generateCode();
+    
+    // 存储验证码
+    codeStorage.setCode(phone, code);
+
+    // 在控制台打印验证码（实际项目中应该通过短信服务发送）
+    console.log(`发送验证码到 ${phone}: ${code}`);
+
+    res.json({
+      success: true,
+      message: '验证码发送成功'
+    });
+  } catch (error) {
+    console.error('发送验证码错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '发送验证码失败，请重试'
+    });
+  }
+};
+
+// 用户注册
 exports.register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, phone, verificationCode, password } = req.body;
 
-    // 验证输入
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: '所有字段都是必填的' });
+    // 验证用户名
+    if (!username || username.length < 3 || username.length > 20) {
+      return res.status(400).json({
+        success: false,
+        message: '用户名长度必须在3-20个字符之间',
+        field: 'username'
+      });
     }
 
-    // 验证邮箱格式
-    if (!validateEmail(email)) {
-      return res.status(400).json({ message: '邮箱格式不正确' });
+    // 验证手机号
+    if (!phone || !/^1[3-9]\d{9}$/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: '请输入正确的手机号码',
+        field: 'phone'
+      });
     }
 
-    // 验证密码强度
-    if (!validatePassword(password)) {
-      return res.status(400).json({ 
-        message: '密码必须至少8个字符，包含大小写字母、数字和特殊字符' 
+    // 验证验证码
+    if (!verificationCode || !codeStorage.verifyCode(phone, verificationCode)) {
+      return res.status(400).json({
+        success: false,
+        message: '验证码错误或已过期',
+        field: 'verificationCode'
+      });
+    }
+
+    // 验证密码
+    if (!password || password.length < 8 || password.length > 20) {
+      return res.status(400).json({
+        success: false,
+        message: '密码长度必须在8-20个字符之间',
+        field: 'password'
       });
     }
 
     // 检查用户名是否已存在
     const existingUsername = await User.findOne({ where: { username } });
     if (existingUsername) {
-      return res.status(400).json({ message: '用户名已被使用' });
+      return res.status(400).json({
+        success: false,
+        message: '用户名已被使用',
+        field: 'username'
+      });
     }
 
-    // 检查邮箱是否已存在
-    const existingEmail = await User.findOne({ where: { email } });
-    if (existingEmail) {
-      return res.status(400).json({ message: '邮箱已被注册' });
+    // 检查手机号是否已被注册
+    const existingPhone = await User.findOne({ where: { phone } });
+    if (existingPhone) {
+      return res.status(400).json({
+        success: false,
+        message: '该手机号已被注册',
+        field: 'phone'
+      });
     }
 
     // 创建新用户
     const user = await User.create({
       username,
-      email,
-      password_hash: password
+      phone
+    }, {
+      password // 通过 options 传递密码
     });
 
+    // 注册成功后，删除验证码
+    codeStorage.removeCode(phone);
+
+    // 生成 token
+    const token = generateToken({ id: user.id });
+
     res.status(201).json({
+      success: true,
       message: '注册成功',
+      token,
       user: {
         id: user.id,
         username: user.username,
-        email: user.email
+        phone: user.phone
       }
     });
   } catch (error) {
     console.error('注册错误:', error);
-    res.status(500).json({ message: '服务器错误，请稍后重试' });
+    res.status(500).json({
+      success: false,
+      message: '注册失败，请重试'
+    });
+  }
+};
+
+// 用户登录
+exports.login = async (req, res) => {
+  try {
+    const { account, password } = req.body;
+
+    // 验证输入
+    if (!account || !password) {
+      return res.status(400).json({
+        success: false,
+        message: '请输入账号和密码',
+        field: !account ? 'account' : 'password'
+      });
+    }
+
+    // 查找用户（支持使用用户名或手机号登录）
+    const user = await User.unscoped().findOne({
+      where: {
+        [Op.or]: [
+          { username: account },
+          { phone: account }
+        ]
+      }
+    });
+
+    // 用户不存在
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: '账号或密码错误',
+        field: 'account'
+      });
+    }
+
+    // 验证密码
+    const isValidPassword = await user.validatePassword(password);
+    if (!isValidPassword) {
+      return res.status(400).json({
+        success: false,
+        message: '账号或密码错误',
+        field: 'password'
+      });
+    }
+
+    // 生成 token
+    const token = generateToken({ id: user.id });
+
+    res.json({
+      success: true,
+      message: '登录成功',
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        phone: user.phone
+      }
+    });
+  } catch (error) {
+    console.error('登录错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '登录失败，请重试'
+    });
   }
 };

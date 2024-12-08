@@ -15,9 +15,15 @@ const User = sequelize.define('users', {
     unique: true,
     comment: '用户名'
   },
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    unique: true,
+    comment: '手机号'
+  },
   email: {
     type: DataTypes.STRING(100),
-    allowNull: false,
+    allowNull: true,
     unique: true,
     comment: '邮箱'
   },
@@ -48,14 +54,31 @@ const User = sequelize.define('users', {
 }, {
   tableName: 'users',
   timestamps: false,
-  schema: 'public' // PostgreSQL schema
+  schema: 'public', // PostgreSQL schema
+  defaultScope: {
+    attributes: { exclude: ['password_hash', 'salt'] }
+  }
 });
 
-// 密码加密中间件
-User.beforeCreate(async (user) => {
+// 设置虚拟字段 password
+User.prototype.setPassword = async function(password) {
   const salt = await bcrypt.genSalt(10);
-  user.salt = salt;
-  user.password_hash = await bcrypt.hash(user.password_hash, salt);
+  this.salt = salt;
+  this.password_hash = await bcrypt.hash(password, salt);
+};
+
+// 密码验证方法
+User.prototype.validatePassword = async function(password) {
+  if (!this.password_hash) return false;
+  return await bcrypt.compare(password, this.password_hash);
+};
+
+// 在创建用户前处理密码
+User.beforeCreate(async (user, options) => {
+  if (!options.password) {
+    throw new Error('Password is required');
+  }
+  await user.setPassword(options.password);
 });
 
 // 同步数据库模型
