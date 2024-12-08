@@ -89,7 +89,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import axios from '../utils/axios';
 
 const router = useRouter();
 const isLoading = ref(false);
@@ -116,31 +116,35 @@ const validateForm = () => {
   errors.newPassword = '';
   errors.confirmPassword = '';
 
+  // 验证手机号
   if (!form.phone) {
-    errors.phone = '手机号码不能为空';
+    errors.phone = '请输入手机号码';
     isValid = false;
   } else if (!/^1[3-9]\d{9}$/.test(form.phone)) {
-    errors.phone = '请输入有效的手机号码';
+    errors.phone = '请输入正确的手机号码';
     isValid = false;
   }
 
+  // 验证验证码
   if (!form.verificationCode) {
-    errors.verificationCode = '验证码不能为空';
+    errors.verificationCode = '请输入验证码';
     isValid = false;
   }
 
+  // 验证新密码
   if (!form.newPassword) {
-    errors.newPassword = '新密码不能为空';
+    errors.newPassword = '请输入新密码';
     isValid = false;
-  } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(form.newPassword)) {
-    errors.newPassword = '密码必须至少8个字符，包含大小写字母、数字和特殊字符';
+  } else if (form.newPassword.length < 8 || form.newPassword.length > 20) {
+    errors.newPassword = '密码长度必须在8-20个字符之间';
     isValid = false;
   }
 
+  // 验证确认密码
   if (!form.confirmPassword) {
     errors.confirmPassword = '请确认新密码';
     isValid = false;
-  } else if (form.newPassword !== form.confirmPassword) {
+  } else if (form.confirmPassword !== form.newPassword) {
     errors.confirmPassword = '两次输入的密码不一致';
     isValid = false;
   }
@@ -149,59 +153,60 @@ const validateForm = () => {
 };
 
 const handleSendCode = async () => {
-  if (!form.phone) {
-    errors.phone = '请先输入手机号码';
-    return;
-  }
-  if (!/^1[3-9]\d{9}$/.test(form.phone)) {
-    errors.phone = '请输入有效的手机号码';
-    return;
-  }
-
   try {
-    // TODO: 调用发送验证码的API
-    // await axios.post('http://localhost:3000/api/auth/send-code', { phone: form.phone });
-    
-    countdown.value = 60;
-    const timer = setInterval(() => {
-      countdown.value--;
-      if (countdown.value <= 0) {
-        clearInterval(timer);
-      }
-    }, 1000);
-  } catch (error) {
-    if (error.response) {
-      errors.phone = error.response.data.message || '发送验证码失败';
-    } else {
-      errors.phone = '发送验证码失败，请检查网络连接';
+    // 验证手机号
+    if (!form.phone || !/^1[3-9]\d{9}$/.test(form.phone)) {
+      errors.phone = '请输入正确的手机号码';
+      return;
     }
+
+    isLoading.value = true;
+    const response = await axios.post('/api/auth/send-reset-code', {
+      phone: form.phone
+    });
+
+    if (response.data.success) {
+      // 开始倒计时
+      countdown.value = 60;
+      const timer = setInterval(() => {
+        countdown.value--;
+        if (countdown.value <= 0) {
+          clearInterval(timer);
+        }
+      }, 1000);
+    }
+  } catch (error) {
+    if (error.response?.data?.field === 'phone') {
+      errors.phone = error.response.data.message;
+    } else {
+      alert(error.response?.data?.message || '发送验证码失败，请重试');
+    }
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const handleSubmit = async () => {
-  if (!validateForm()) return;
-
   try {
+    if (!validateForm()) return;
+
     isLoading.value = true;
-    // TODO: 调用重置密码的API
-    // await axios.post('http://localhost:3000/api/auth/reset-password', form);
-    
-    alert('密码重置成功！');
-    router.push('/login');
+    const response = await axios.post('/api/auth/reset-password', {
+      phone: form.phone,
+      verificationCode: form.verificationCode,
+      newPassword: form.newPassword
+    });
+
+    if (response.data.success) {
+      alert('密码重置成功！');
+      router.push('/login');
+    }
   } catch (error) {
-    if (error.response) {
-      const { message } = error.response.data;
-      if (message.includes('手机')) {
-        errors.phone = message;
-      } else if (message.includes('验证码')) {
-        errors.verificationCode = message;
-      } else if (message.includes('密码')) {
-        errors.newPassword = message;
-      } else {
-        alert(message || '重置密码失败，请重试');
-      }
+    const field = error.response?.data?.field;
+    if (field && errors[field] !== undefined) {
+      errors[field] = error.response.data.message;
     } else {
-      alert('重置密码失败，请检查网络连接');
+      alert(error.response?.data?.message || '重置密码失败，请重试');
     }
   } finally {
     isLoading.value = false;

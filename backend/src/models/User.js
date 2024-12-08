@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const bcrypt = require('bcryptjs');
 
 const User = sequelize.define('users', {
   id: {
@@ -27,14 +26,10 @@ const User = sequelize.define('users', {
     unique: true,
     comment: '邮箱'
   },
-  password_hash: {
+  password: {
     type: DataTypes.STRING(255),
     allowNull: false,
     comment: '密码哈希'
-  },
-  salt: {
-    type: DataTypes.STRING(50),
-    comment: '密码加盐'
   },
   status: {
     type: DataTypes.SMALLINT,
@@ -49,36 +44,15 @@ const User = sequelize.define('users', {
   is_verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
-    comment: '是否邮箱验证'
+    comment: '是否已验证'
   }
 }, {
   tableName: 'users',
   timestamps: false,
   schema: 'public', // PostgreSQL schema
   defaultScope: {
-    attributes: { exclude: ['password_hash', 'salt'] }
+    attributes: { exclude: ['password'] }
   }
-});
-
-// 设置虚拟字段 password
-User.prototype.setPassword = async function(password) {
-  const salt = await bcrypt.genSalt(10);
-  this.salt = salt;
-  this.password_hash = await bcrypt.hash(password, salt);
-};
-
-// 密码验证方法
-User.prototype.validatePassword = async function(password) {
-  if (!this.password_hash) return false;
-  return await bcrypt.compare(password, this.password_hash);
-};
-
-// 在创建用户前处理密码
-User.beforeCreate(async (user, options) => {
-  if (!options.password) {
-    throw new Error('Password is required');
-  }
-  await user.setPassword(options.password);
 });
 
 // 同步数据库模型

@@ -131,14 +131,70 @@ const startCountdown = () => {
   }, 1000);
 };
 
+const validateForm = () => {
+  let isValid = true;
+  // 清空所有错误
+  Object.keys(errors).forEach(key => errors[key] = '');
+
+  // 用户名验证
+  if (!formData.username) {
+    errors.username = 'Username is required';
+    isValid = false;
+  } else if (formData.username.length < 3 || formData.username.length > 20) {
+    errors.username = 'Username must be between 3 and 20 characters';
+    isValid = false;
+  }
+
+  // 手机号验证
+  if (!formData.phone) {
+    errors.phone = 'Phone number is required';
+    isValid = false;
+  } else if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
+    errors.phone = 'Please enter a valid phone number';
+    isValid = false;
+  }
+
+  // 验证码验证
+  if (!formData.verificationCode) {
+    errors.verificationCode = 'Verification code is required';
+    isValid = false;
+  } else if (!/^\d{6}$/.test(formData.verificationCode)) {
+    errors.verificationCode = 'Please enter a valid 6-digit code';
+    isValid = false;
+  }
+
+  // 密码验证
+  if (!formData.password) {
+    errors.password = 'Password is required';
+    isValid = false;
+  } else if (formData.password.length < 8) {
+    errors.password = 'Password must be at least 8 characters';
+    isValid = false;
+  }
+
+  // 确认密码验证
+  if (!formData.confirmPassword) {
+    errors.confirmPassword = 'Please confirm your password';
+    isValid = false;
+  } else if (formData.password !== formData.confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match';
+    isValid = false;
+  }
+
+  return isValid;
+};
+
 const sendVerificationCode = async () => {
+  // 清空手机号相关错误
+  errors.phone = '';
+  
   // 验证手机号
   if (!formData.phone) {
-    errors.phone = '请输入手机号码';
+    errors.phone = 'Phone number is required';
     return;
   }
   if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
-    errors.phone = '请输入正确的手机号码';
+    errors.phone = 'Please enter a valid phone number';
     return;
   }
 
@@ -150,62 +206,14 @@ const sendVerificationCode = async () => {
     });
     startCountdown();
   } catch (error) {
-    if (error.response) {
-      errors.phone = error.response.data.message || '发送验证码失败';
+    if (error.response?.data?.message) {
+      errors.phone = error.response.data.message;
     } else {
-      errors.phone = '发送验证码失败，请重试';
+      errors.phone = 'Failed to send verification code';
     }
   } finally {
     isCodeSending.value = false;
   }
-};
-
-const validateForm = () => {
-  let isValid = true;
-  errors.username = '';
-  errors.phone = '';
-  errors.verificationCode = '';
-  errors.password = '';
-  errors.confirmPassword = '';
-
-  if (!formData.username) {
-    errors.username = '用户名不能为空';
-    isValid = false;
-  }
-
-  if (!formData.phone) {
-    errors.phone = '手机号码不能为空';
-    isValid = false;
-  } else if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
-    errors.phone = '请输入正确的手机号码';
-    isValid = false;
-  }
-
-  if (!formData.verificationCode) {
-    errors.verificationCode = '请输入验证码';
-    isValid = false;
-  } else if (!/^\d{6}$/.test(formData.verificationCode)) {
-    errors.verificationCode = '验证码格式不正确';
-    isValid = false;
-  }
-
-  if (!formData.password) {
-    errors.password = '密码不能为空';
-    isValid = false;
-  } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(formData.password)) {
-    errors.password = '密码必须至少8个字符，包含大小写字母、数字和特殊字符';
-    isValid = false;
-  }
-
-  if (!formData.confirmPassword) {
-    errors.confirmPassword = '请确认密码';
-    isValid = false;
-  } else if (formData.password !== formData.confirmPassword) {
-    errors.confirmPassword = '两次输入的密码不一致';
-    isValid = false;
-  }
-
-  return isValid;
 };
 
 const handleRegister = async () => {
@@ -221,23 +229,19 @@ const handleRegister = async () => {
     });
     
     if (response.data) {
-      alert('注册成功！');
+      alert('Registration successful!');
       router.push('/login');
     }
   } catch (error) {
-    if (error.response) {
-      const { message } = error.response.data;
-      if (message.includes('用户名')) {
-        errors.username = message;
-      } else if (message.includes('手机')) {
-        errors.phone = message;
-      } else if (message.includes('验证码')) {
-        errors.verificationCode = message;
+    if (error.response?.data) {
+      const { message, field } = error.response.data;
+      if (field && errors.hasOwnProperty(field)) {
+        errors[field] = message;
       } else {
-        alert(message || '注册失败，请重试');
+        alert(message || 'Registration failed. Please try again.');
       }
     } else {
-      alert('注册失败，请重试');
+      alert('Registration failed. Please try again.');
     }
   } finally {
     isLoading.value = false;
