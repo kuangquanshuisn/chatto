@@ -1,15 +1,29 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-const sequelize = new Sequelize('postgresql://neondb_owner:jO6PsTQiy9XG@ep-withered-forest-a1qplclv.ap-southeast-1.aws.neon.tech/neondb?sslmode=require', {
+const {
+  DB_HOST,
+  DB_PORT,
+  DB_NAME,
+  DB_USER,
+  DB_PASSWORD,
+  DB_SSL
+} = process.env;
+
+const sequelize = new Sequelize({
   dialect: 'postgres',
+  host: DB_HOST,
+  port: DB_PORT,
+  database: DB_NAME,
+  username: DB_USER,
+  password: DB_PASSWORD,
   dialectOptions: {
-    ssl: {
+    ssl: DB_SSL === 'true' ? {
       require: true,
       rejectUnauthorized: false
-    }
+    } : false
   },
-  logging: false
+  logging: process.env.NODE_ENV === 'development' ? console.log : false
 });
 
 // 测试数据库连接
