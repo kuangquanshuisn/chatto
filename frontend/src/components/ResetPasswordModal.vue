@@ -18,6 +18,7 @@
                 placeholder="手机号码"
                 required
               />
+              <span v-if="errors.phone" class="text-red-500 text-sm">{{ errors.phone }}</span>
             </div>
 
             <!-- 验证码 -->
@@ -33,12 +34,13 @@
                 <button
                   type="button"
                   @click="handleSendCode"
-                  :disabled="countdown > 0"
+                  :disabled="isCodeSending || countdown > 0"
                   class="px-6 h-12 whitespace-nowrap border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {{ countdown > 0 ? `${countdown}s后重新发送` : '获取验证码' }}
+                  {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
                 </button>
               </div>
+              <span v-if="errors.verificationCode" class="text-red-500 text-sm">{{ errors.verificationCode }}</span>
             </div>
 
             <!-- 新密码 -->
@@ -50,6 +52,7 @@
                 placeholder="新密码"
                 required
               />
+              <span v-if="errors.newPassword" class="text-red-500 text-sm">{{ errors.newPassword }}</span>
             </div>
 
             <!-- 确认新密码 -->
@@ -61,6 +64,7 @@
                 placeholder="确认新密码"
                 required
               />
+              <span v-if="errors.confirmPassword" class="text-red-500 text-sm">{{ errors.confirmPassword }}</span>
             </div>
 
             <!-- 按钮组 -->
@@ -90,7 +94,8 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onUnmounted } from 'vue'
+import axios from 'axios'
 
 const props = defineProps({
   show: {
@@ -99,9 +104,12 @@ const props = defineProps({
   }
 })
 
-defineEmits(['close', 'success'])
+const emit = defineEmits(['close', 'success'])
 
 const countdown = ref(0)
+const isCodeSending = ref(false)
+let countdownTimer = null
+
 const form = reactive({
   phone: '',
   verificationCode: '',
@@ -109,26 +117,104 @@ const form = reactive({
   confirmPassword: ''
 })
 
-const handleSendCode = async () => {
-  // TODO: 调用发送验证码的API
-  countdown.value = 60
-  const timer = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(timer)
-    }
-  }, 1000)
+const errors = reactive({
+  phone: '',
+  verificationCode: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const validateForm = () => {
+  let isValid = true
+  errors.phone = ''
+  errors.verificationCode = ''
+  errors.newPassword = ''
+  errors.confirmPassword = ''
+
+  // 验证手机号
+  if (!form.phone) {
+    errors.phone = '请输入手机号码'
+    isValid = false
+  } else if (!/^1[3-9]\d{9}$/.test(form.phone)) {
+    errors.phone = '请输入正确的手机号码'
+    isValid = false
+  }
+
+  // 验证验证码
+  if (!form.verificationCode) {
+    errors.verificationCode = '请输入验证码'
+    isValid = false
+  } else if (!/^\d{6}$/.test(form.verificationCode)) {
+    errors.verificationCode = '验证码格式不正确'
+    isValid = false
+  }
+
+  // 验证新密码
+  if (!form.newPassword) {
+    errors.newPassword = '请输入新密码'
+    isValid = false
+  } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(form.newPassword)) {
+    errors.newPassword = '密码必须至少8个字符，包含大小写字母、数字和特殊字符'
+    isValid = false
+  }
+
+  // 验证确认密码
+  if (!form.confirmPassword) {
+    errors.confirmPassword = '请确认新密码'
+    isValid = false
+  } else if (form.newPassword !== form.confirmPassword) {
+    errors.confirmPassword = '两次输入的密码不一致'
+    isValid = false
+  }
+
+  return isValid
 }
 
-const handleSubmit = async () => {
-  if (form.newPassword !== form.confirmPassword) {
-    alert('两次输入的密码不一致')
+const handleSendCode = async () => {
+  // 验证手机号
+  if (!form.phone) {
+    errors.phone = '请输入手机号码'
+    return
+  }
+  if (!/^1[3-9]\d{9}$/.test(form.phone)) {
+    errors.phone = '请输入正确的手机号码'
     return
   }
 
   try {
-    // TODO: 调用重置密码的API
-    // await resetPassword(form)
+    isCodeSending.value = true
+    // 调用发送验证码的API
+    await axios.post('http://localhost:3000/api/auth/reset-password-code', {
+      phone: form.phone
+    })
+    countdown.value = 60
+    countdownTimer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0) {
+        clearInterval(countdownTimer)
+      }
+    }, 1000)
+  } catch (error) {
+    if (error.response) {
+      errors.phone = error.response.data.message || '发送验证码失败'
+    } else {
+      errors.phone = '发送验证码失败，请重试'
+    }
+  } finally {
+    isCodeSending.value = false
+  }
+}
+
+const handleSubmit = async () => {
+  if (!validateForm()) return
+
+  try {
+    await axios.post('http://localhost:3000/api/auth/reset-password', {
+      phone: form.phone,
+      verificationCode: form.verificationCode,
+      newPassword: form.newPassword
+    })
+    
     alert('密码重置成功')
     form.phone = ''
     form.verificationCode = ''
@@ -137,8 +223,26 @@ const handleSubmit = async () => {
     emit('success')
     emit('close')
   } catch (error) {
-    console.error('重置密码失败:', error)
-    alert('重置密码失败，请重试')
+    if (error.response) {
+      const { message } = error.response.data
+      if (message.includes('手机')) {
+        errors.phone = message
+      } else if (message.includes('验证码')) {
+        errors.verificationCode = message
+      } else if (message.includes('密码')) {
+        errors.newPassword = message
+      } else {
+        alert(message || '重置密码失败，请重试')
+      }
+    } else {
+      alert('重置密码失败，请重试')
+    }
   }
 }
+
+onUnmounted(() => {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+  }
+})
 </script>

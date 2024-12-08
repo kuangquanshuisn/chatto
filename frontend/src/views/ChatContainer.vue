@@ -91,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue';
+import { ref, watch, nextTick, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { vOnClickOutside } from '@vueuse/components'
 import Message from '../components/Message.vue';
@@ -143,7 +143,47 @@ watch(messages, () => {
   scrollToBottom();
 }, { deep: true });
 
-const handleSendMessage = (content: string) => {
+// 加载聊天历史记录
+const loadChatHistory = async () => {
+  try {
+    // TODO: 替换为实际的用户ID
+    const userId = '1'; // 这里应该从用户状态或登录信息中获取
+    const response = await fetch(`http://localhost:3000/api/messages/${userId}`);
+    const data = await response.json();
+    messages.value = data.map((msg: any) => ({
+      id: msg.id.toString(),
+      content: msg.content,
+      isAI: msg.is_ai,
+      timestamp: new Date(msg.created_at).toLocaleTimeString()
+    }));
+    scrollToBottom();
+  } catch (error) {
+    console.error('加载聊天历史记录失败:', error);
+  }
+};
+
+// 保存消息到服务器
+const saveMessage = async (message: ChatMessage, isAI: boolean) => {
+  try {
+    // TODO: 替换为实际的用户ID
+    const userId = '1'; // 这里应该从用户状态或登录信息中获取
+    await fetch('http://localhost:3000/api/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        content: message.content,
+        is_ai: isAI
+      })
+    });
+  } catch (error) {
+    console.error('保存消息失败:', error);
+  }
+};
+
+const handleSendMessage = async (content: string) => {
   const newMessage: ChatMessage = {
     id: Date.now().toString(),
     content,
@@ -152,10 +192,11 @@ const handleSendMessage = (content: string) => {
   };
 
   messages.value.push(newMessage);
+  await saveMessage(newMessage, false);
   scrollToBottom();
 
-  // Simulate AI response
-  setTimeout(() => {
+  // 模拟AI响应
+  setTimeout(async () => {
     const aiResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
       content: 'This is a simulated AI response.',
@@ -163,7 +204,13 @@ const handleSendMessage = (content: string) => {
       timestamp: new Date().toLocaleTimeString(),
     };
     messages.value.push(aiResponse);
+    await saveMessage(aiResponse, true);
     scrollToBottom();
   }, 1000);
 };
+
+// 在组件挂载时加载聊天历史记录
+onMounted(() => {
+  loadChatHistory();
+});
 </script>

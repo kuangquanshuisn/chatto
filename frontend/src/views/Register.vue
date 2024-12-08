@@ -22,13 +22,34 @@
         
         <div class="space-y-2">
           <input
-            id="email"
-            v-model="formData.email"
-            type="email"
-            placeholder="Email"
+            id="phone"
+            v-model="formData.phone"
+            type="tel"
+            placeholder="Phone Number"
             class="w-full h-12 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
           />
-          <span v-if="errors.email" class="text-red-500 text-sm">{{ errors.email }}</span>
+          <span v-if="errors.phone" class="text-red-500 text-sm">{{ errors.phone }}</span>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex space-x-2">
+            <input
+              id="verificationCode"
+              v-model="formData.verificationCode"
+              type="text"
+              placeholder="Verification Code"
+              class="flex-1 h-12 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black"
+            />
+            <button
+              type="button"
+              @click="sendVerificationCode"
+              :disabled="isCodeSending || countdown > 0"
+              class="w-32 h-12 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 transition duration-300 ease-in-out disabled:bg-gray-50 disabled:text-gray-400"
+            >
+              {{ countdown > 0 ? `${countdown}s` : 'Get Code' }}
+            </button>
+          </div>
+          <span v-if="errors.verificationCode" class="text-red-500 text-sm">{{ errors.verificationCode }}</span>
         </div>
 
         <div class="space-y-2">
@@ -73,31 +94,77 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 const router = useRouter();
 const isLoading = ref(false);
+const isCodeSending = ref(false);
+const countdown = ref(0);
+let countdownTimer = null;
 
 const formData = reactive({
   username: '',
-  email: '',
+  phone: '',
+  verificationCode: '',
   password: '',
   confirmPassword: ''
 });
 
 const errors = reactive({
   username: '',
-  email: '',
+  phone: '',
+  verificationCode: '',
   password: '',
   confirmPassword: ''
 });
 
+const startCountdown = () => {
+  countdown.value = 60;
+  countdownTimer = setInterval(() => {
+    if (countdown.value > 0) {
+      countdown.value--;
+    } else {
+      clearInterval(countdownTimer);
+    }
+  }, 1000);
+};
+
+const sendVerificationCode = async () => {
+  // 验证手机号
+  if (!formData.phone) {
+    errors.phone = '请输入手机号码';
+    return;
+  }
+  if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
+    errors.phone = '请输入正确的手机号码';
+    return;
+  }
+
+  try {
+    isCodeSending.value = true;
+    // 调用发送验证码的API
+    await axios.post('http://localhost:3000/api/auth/send-code', {
+      phone: formData.phone
+    });
+    startCountdown();
+  } catch (error) {
+    if (error.response) {
+      errors.phone = error.response.data.message || '发送验证码失败';
+    } else {
+      errors.phone = '发送验证码失败，请重试';
+    }
+  } finally {
+    isCodeSending.value = false;
+  }
+};
+
 const validateForm = () => {
   let isValid = true;
   errors.username = '';
-  errors.email = '';
+  errors.phone = '';
+  errors.verificationCode = '';
   errors.password = '';
   errors.confirmPassword = '';
 
@@ -106,11 +173,19 @@ const validateForm = () => {
     isValid = false;
   }
 
-  if (!formData.email) {
-    errors.email = '邮箱不能为空';
+  if (!formData.phone) {
+    errors.phone = '手机号码不能为空';
     isValid = false;
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-    errors.email = '邮箱格式不正确';
+  } else if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
+    errors.phone = '请输入正确的手机号码';
+    isValid = false;
+  }
+
+  if (!formData.verificationCode) {
+    errors.verificationCode = '请输入验证码';
+    isValid = false;
+  } else if (!/^\d{6}$/.test(formData.verificationCode)) {
+    errors.verificationCode = '验证码格式不正确';
     isValid = false;
   }
 
@@ -138,7 +213,12 @@ const handleRegister = async () => {
 
   try {
     isLoading.value = true;
-    const response = await axios.post('http://localhost:3000/api/auth/register', formData);
+    const response = await axios.post('http://localhost:3000/api/auth/register', {
+      username: formData.username,
+      phone: formData.phone,
+      verificationCode: formData.verificationCode,
+      password: formData.password
+    });
     
     if (response.data) {
       alert('注册成功！');
@@ -149,16 +229,24 @@ const handleRegister = async () => {
       const { message } = error.response.data;
       if (message.includes('用户名')) {
         errors.username = message;
-      } else if (message.includes('邮箱')) {
-        errors.email = message;
+      } else if (message.includes('手机')) {
+        errors.phone = message;
+      } else if (message.includes('验证码')) {
+        errors.verificationCode = message;
       } else {
         alert(message || '注册失败，请重试');
       }
     } else {
-      alert('注册失败，请检查网络连接');
+      alert('注册失败，请重试');
     }
   } finally {
     isLoading.value = false;
   }
 };
+
+onUnmounted(() => {
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+  }
+});
 </script>
