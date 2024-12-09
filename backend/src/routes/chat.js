@@ -32,6 +32,19 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Get available models
+router.get('/models', (req, res) => {
+  try {
+    const modelsStr = process.env.OPENAI_MODEL || '';
+    const models = modelsStr.split(',').filter(model => model.trim() !== '');
+    
+    res.json({ models });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get chat history endpoint
 router.get('/history', async (req, res) => {
   // In a real application, this would fetch from a database

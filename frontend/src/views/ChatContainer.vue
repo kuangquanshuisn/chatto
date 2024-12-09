@@ -106,10 +106,23 @@ interface ChatMessage {
 }
 
 const router = useRouter();
-const models = ['gpt-4o', 'gemini', 'qwen2.5'];
-const selectedModel = ref('gpt-4o');
+const models = ref<string[]>([]);
+const selectedModel = ref('');
 const isModelSelectOpen = ref(false);
 const isAvatarMenuOpen = ref(false);
+
+const fetchModels = async () => {
+  try {
+    const response = await fetch('http://localhost:3000/api/chat/models');
+    const data = await response.json();
+    models.value = data.models;
+    if (models.value.length > 0 && !selectedModel.value) {
+      selectedModel.value = models.value[0];
+    }
+  } catch (error) {
+    console.error('Error fetching models:', error);
+  }
+};
 
 const selectModel = (model: string) => {
   selectedModel.value = model;
@@ -202,7 +215,8 @@ const handleSendMessage = async (content: string) => {
 };
 
 // 在组件挂载时加载聊天历史记录
-onMounted(() => {
+onMounted(async () => {
+  await fetchModels();
   loadChatHistory();
 });
 </script>
