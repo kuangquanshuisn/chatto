@@ -9,7 +9,7 @@
           isAI ? 'bg-white border border-gray-200' : 'bg-blue-500 text-white'
         }`"
       >
-        <p class="text-base mb-2">{{ content }}</p>
+        <RichTextRenderer :content="content" />
         <div :class="`flex gap-1 ${isAI ? 'justify-start' : 'justify-end'}`" style="display: none;">
           <button :class="`p-1 rounded hover:bg-${isAI ? 'gray-100' : 'blue-600'}`">
             <HandThumbUpIcon :class="`w-4 h-4 ${isAI ? 'text-gray-500' : 'text-white'}`" />
@@ -39,6 +39,7 @@
     ChatBubbleLeftIcon,
     TrashIcon 
   } from '@heroicons/vue/24/outline';
+  import RichTextRenderer from './RichTextRenderer.vue';
   
   defineProps<{
     content: string;
