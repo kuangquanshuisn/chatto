@@ -9,27 +9,58 @@ const openai = new OpenAI({
 // Chat endpoint
 router.post('/', async (req, res) => {
   try {
-    const { message, model = 'gpt-4' } = req.body;
+    const { message, model = 'gpt-4o-mini' } = req.body;
+
+    // Set headers for SSE
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
 
     const completion = await openai.chat.completions.create({
       model: model,
       messages: [{ role: 'user', content: message }],
       temperature: 0.7,
       max_tokens: 1000,
+      stream: true,
     });
 
-    const aiResponse = completion.choices[0].message.content;
+    let fullResponse = '';
 
-    res.json({
+    for await (const chunk of completion) {
+      const content = chunk.choices[0]?.delta?.content || '';
+      fullResponse += content;
+      
+      // Send the chunk to the client
+      res.write(`data: ${JSON.stringify({
+        id: Date.now().toString(),
+        content: content,
+        isAI: true,
+        timestamp: new Date().toISOString(),
+        done: false
+      })}\n\n`);
+    }
+
+    // Send the final message indicating completion
+    res.write(`data: ${JSON.stringify({
       id: Date.now().toString(),
-      content: aiResponse,
+      content: fullResponse,
       isAI: true,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+      done: true
+    })}\n\n`);
+
+    res.end();
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: error.message });
+    res.write(`data: ${JSON.stringify({ error: error.message, done: true })}\n\n`);
+    res.end();
   }
+});
+
+// Get chat history endpoint
+router.get('/history', async (req, res) => {
+  // In a real application, this would fetch from a database
+  res.json([]);
 });
 
 // Get available models
@@ -43,12 +74,6 @@ router.get('/models', (req, res) => {
     console.error('Error:', error);
     res.status(500).json({ error: error.message });
   }
-});
-
-// Get chat history endpoint
-router.get('/history', async (req, res) => {
-  // In a real application, this would fetch from a database
-  res.json([]);
 });
 
 module.exports = router;

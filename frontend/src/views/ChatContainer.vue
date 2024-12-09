@@ -184,7 +184,16 @@ const handleSendMessage = async (content: string) => {
   await saveMessage(content, false);
 
   try {
-    // Send message to API
+    // Create temporary message for streaming response
+    const tempMessageId = Date.now().toString();
+    messages.value.push({
+      id: tempMessageId,
+      content: '',
+      isAI: true,
+      timestamp: new Date().toISOString()
+    });
+
+    // Create EventSource for streaming
     const response = await fetch('http://localhost:3000/api/chat', {
       method: 'POST',
       headers: {
@@ -196,13 +205,48 @@ const handleSendMessage = async (content: string) => {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error('Failed to get AI response');
+    // Create a reader to read the stream
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+
+    if (!reader) {
+      throw new Error('Failed to create stream reader');
     }
 
-    // Get and save AI response
-    const aiResponse = await response.json();
-    await saveMessage(aiResponse.content, true);
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            
+            // Update the temporary message with new content
+            const messageIndex = messages.value.findIndex(m => m.id === tempMessageId);
+            if (messageIndex !== -1) {
+              if (data.done) {
+                // Replace temporary message with final message
+                messages.value[messageIndex] = {
+                  id: data.id,
+                  content: data.content,
+                  isAI: true,
+                  timestamp: data.timestamp
+                };
+              } else {
+                // Append new content to existing message
+                messages.value[messageIndex].content += data.content;
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing SSE data:', e);
+          }
+        }
+      }
+    }
   } catch (error) {
     console.error('Error sending message:', error);
     messages.value.push({
