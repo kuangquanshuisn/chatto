@@ -2,7 +2,7 @@ const User = require('../models/User');
 const codeStorage = require('../utils/codeStorage');
 const { generateToken } = require('../utils/jwt');
 const { Op } = require('sequelize');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // 发送验证码
 exports.sendVerificationCode = async (req, res) => {
