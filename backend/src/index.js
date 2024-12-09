@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const messageController = require('./controllers/messageController');
 const authRoutes = require('./routes/auth');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,6 +19,9 @@ app.get('/', (req, res) => {
 
 // 认证相关路由
 app.use('/api/auth', authRoutes);
+
+// 聊天相关路由
+app.use('/api/chat', chatRoutes);
 
 // 消息相关路由
 app.post('/api/messages', messageController.saveMessage);

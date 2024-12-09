@@ -143,70 +143,62 @@ watch(messages, () => {
   scrollToBottom();
 }, { deep: true });
 
-// 加载聊天历史记录
 const loadChatHistory = async () => {
   try {
-    // TODO: 替换为实际的用户ID
-    const userId = '1'; // 这里应该从用户状态或登录信息中获取
-    const response = await fetch(`http://localhost:3000/api/messages/${userId}`);
-    const data = await response.json();
-    messages.value = data.map((msg: any) => ({
-      id: msg.id.toString(),
-      content: msg.content,
-      isAI: msg.is_ai,
-      timestamp: new Date(msg.created_at).toLocaleTimeString()
-    }));
-    scrollToBottom();
+    const response = await fetch('http://localhost:3000/api/chat/history');
+    const history = await response.json();
+    messages.value = history;
   } catch (error) {
-    console.error('加载聊天历史记录失败:', error);
+    console.error('Error loading chat history:', error);
   }
 };
 
-// 保存消息到服务器
-const saveMessage = async (message: ChatMessage, isAI: boolean) => {
-  try {
-    // TODO: 替换为实际的用户ID
-    const userId = '1'; // 这里应该从用户状态或登录信息中获取
-    await fetch('http://localhost:3000/api/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        content: message.content,
-        is_ai: isAI
-      })
-    });
-  } catch (error) {
-    console.error('保存消息失败:', error);
-  }
+const saveMessage = async (content: string, isAI: boolean) => {
+  const message: ChatMessage = {
+    id: Date.now().toString(),
+    content,
+    isAI,
+    timestamp: new Date().toISOString()
+  };
+  messages.value.push(message);
+  return message;
 };
 
 const handleSendMessage = async (content: string) => {
-  const newMessage: ChatMessage = {
-    id: Date.now().toString(),
-    content,
-    isAI: false,
-    timestamp: new Date().toLocaleTimeString(),
-  };
+  if (!content.trim()) return;
 
-  messages.value.push(newMessage);
-  await saveMessage(newMessage, false);
-  scrollToBottom();
+  // Save user message
+  await saveMessage(content, false);
 
-  // 模拟AI响应
-  setTimeout(async () => {
-    const aiResponse: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      content: 'This is a simulated AI response.',
+  try {
+    // Send message to API
+    const response = await fetch('http://localhost:3000/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: content,
+        model: selectedModel.value
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get AI response');
+    }
+
+    // Get and save AI response
+    const aiResponse = await response.json();
+    await saveMessage(aiResponse.content, true);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    messages.value.push({
+      id: Date.now().toString(),
+      content: 'Sorry, there was an error processing your message. Please try again.',
       isAI: true,
-      timestamp: new Date().toLocaleTimeString(),
-    };
-    messages.value.push(aiResponse);
-    await saveMessage(aiResponse, true);
-    scrollToBottom();
-  }, 1000);
+      timestamp: new Date().toISOString()
+    });
+  }
 };
 
 // 在组件挂载时加载聊天历史记录
