@@ -6,6 +6,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+const jwt = require('jsonwebtoken'); // 引入jsonwebtoken库
+
+
 // Chat endpoint
 router.post('/', async (req, res) => {
   try {
@@ -66,10 +69,22 @@ router.get('/history', async (req, res) => {
 // Get available models
 router.get('/models', (req, res) => {
   try {
-    const modelsStr = process.env.OPENAI_MODEL || '';
-    const models = modelsStr.split(',').filter(model => model.trim() !== '');
-    
-    res.json({ models });
+    const token = req.headers['authorization']?.split(' ')[1]; // 从请求头获取token
+    if (!token) {
+      return res.status(401).json({ error: '未授权，请登录' }); // 如果没有token，返回401
+    }
+
+    // 验证token
+    jwt.verify(token, process.env.JWT_SECRET, (err) => {
+      if (err) {
+        return res.status(401).json({ error: '无效的token，请登录' }); // 如果token无效，返回401
+      }
+
+      const modelsStr = process.env.OPENAI_MODEL || '';
+      const models = modelsStr.split(',').filter(model => model.trim() !== '');
+      
+      res.json({ models });
+    });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: error.message });

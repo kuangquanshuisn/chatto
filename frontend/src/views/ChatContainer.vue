@@ -113,7 +113,18 @@ const isAvatarMenuOpen = ref(false);
 
 const fetchModels = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/chat/models');
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:3000/api/chat/models', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.status === 401) {
+      router.push('/login');
+      return;
+    }
+
     const data = await response.json();
     models.value = data.models;
     if (models.value.length > 0 && !selectedModel.value) {
@@ -130,9 +141,12 @@ const selectModel = (model: string) => {
 };
 
 const handleLogout = () => {
-  // 可以在这里添加清除用户数据的逻辑
+  // 清除本地存储中的token和用户信息
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  
+  // 跳转到登录页面
   router.push('/login');
-  isAvatarMenuOpen.value = false;
 };
 
 const handleProfile = () => {

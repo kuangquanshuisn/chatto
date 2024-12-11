@@ -100,4 +100,21 @@ router.post('/register', async (req, res) => {
   }
 });
 
+router.post('/logout', (req, res) => {
+  // 这里可以实现使token失效的逻辑，例如将token添加到黑名单
+  const token = req.headers['authorization']; // 获取请求头中的token
+  if (!token) {
+    return res.status(401).json({ message: '未提供token' }); // 如果没有token，返回401
+  }
+
+  // 假设有一个函数可以将token添加到黑名单
+  blacklistToken(token)
+    .then(() => {
+      res.json({ message: '成功退出' });
+    })
+    .catch(err => {
+      res.status(500).json({ message: '退出失败', error: err.message });
+    });
+});
+
 module.exports = router;
