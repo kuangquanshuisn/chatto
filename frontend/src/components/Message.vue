@@ -6,7 +6,12 @@
       >
         AI
       </div>
-      <MessageBubble :content="content" :isAI="isAI" :timestamp="timestamp" />
+      <MessageBubble 
+        :content="content" 
+        :isAI="isAI" 
+        :timestamp="timestamp" 
+        :model="model"
+      />
       <div
         v-if="!isAI"
         class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-200 text-sm"
@@ -23,5 +28,6 @@
     content: string;
     isAI: boolean;
     timestamp: string;
+    model?: string;
   }>();
   </script>

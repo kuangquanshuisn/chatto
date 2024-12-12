@@ -80,6 +80,7 @@
         :content="message.content"
         :isAI="message.isAI"
         :timestamp="message.timestamp"
+        :model="message.model"
       />
       <div ref="messagesEndRef" />
     </div>
@@ -110,6 +111,7 @@ interface ChatMessage {
   content: string;
   isAI: boolean;
   timestamp: string;
+  model?: string;
 }
 
 const router = useRouter();
@@ -200,12 +202,13 @@ const formatDateTime = () => {
   }).format(new Date()).replace(/\//g, '-');
 };
 
-const saveMessage = async (content: string, isAI: boolean) => {
+const saveMessage = async (content: string, isAI: boolean, model?: string) => {
   const message: ChatMessage = {
     id: Date.now().toString(),
     content,
     isAI,
-    timestamp: formatDateTime()
+    timestamp: formatDateTime(),
+    model
   };
   messages.value.push(message);
   return message;
@@ -224,7 +227,8 @@ const handleSendMessage = async (content: string) => {
       id: tempMessageId,
       content: '',
       isAI: true,
-      timestamp: formatDateTime()
+      timestamp: formatDateTime(),
+      model: selectedModel.value
     });
 
     // Create EventSource for streaming
@@ -268,7 +272,8 @@ const handleSendMessage = async (content: string) => {
                   id: data.id,
                   content: data.content,
                   isAI: true,
-                  timestamp: data.timestamp
+                  timestamp: data.timestamp,
+                  model: selectedModel.value
                 };
               } else {
                 // Append new content to existing message

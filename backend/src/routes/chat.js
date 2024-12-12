@@ -45,6 +45,7 @@ router.post('/', async (req, res) => {
         id: Date.now().toString(),
         content: content,
         isAI: true,
+        model: model,
         timestamp: dayjs().tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss'),
         done: false
       })}\n\n`);
@@ -55,6 +56,7 @@ router.post('/', async (req, res) => {
       id: Date.now().toString(),
       content: fullResponse,
       isAI: true,
+      model: model,
       timestamp: dayjs().tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss'),
       done: true
     })}\n\n`);
