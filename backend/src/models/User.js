@@ -9,11 +9,11 @@ const User = sequelize.define('users', {
     autoIncrement: true,
     comment: '用户ID'
   },
-  user_code: { // 新增用户编码字段
+  user_code: {
     type: DataTypes.STRING(32),
     allowNull: false,
     unique: true,
-    defaultValue: uuidv4().replace(/-/g, ''), // 去掉连字符
+    defaultValue: () => uuidv4().replace(/-/g, ''),
     comment: '用户编码'
   },
   username: {
@@ -26,13 +26,17 @@ const User = sequelize.define('users', {
     type: DataTypes.STRING(20),
     allowNull: false,
     unique: true,
-    comment: '手机号'
+    validate: {
+      is: /^1[3-9]\d{9}$/
+    }
   },
   email: {
     type: DataTypes.STRING(100),
     allowNull: true,
     unique: true,
-    comment: '邮箱'
+    validate: {
+      isEmail: true
+    }
   },
   password: {
     type: DataTypes.STRING(255),
@@ -42,7 +46,9 @@ const User = sequelize.define('users', {
   status: {
     type: DataTypes.SMALLINT,
     defaultValue: 1,
-    comment: '用户状态(1-正常 2-禁用 3-注销)'
+    validate: {
+      isIn: [[1, 2, 3]]
+    }
   },
   register_time: {
     type: DataTypes.DATE,
@@ -60,16 +66,28 @@ const User = sequelize.define('users', {
   schema: 'public', // PostgreSQL schema
   defaultScope: {
     attributes: { exclude: ['password'] }
-  }
+  },
+  hooks: {
+    beforeCreate: (user) => {
+      if (!user.user_code) {
+        user.user_code = uuidv4().replace(/-/g, '');
+      }
+    }
+  },
+  indexes: [
+    {
+      unique: true,
+      fields: ['user_code']
+    },
+    {
+      unique: true,
+      fields: ['phone']
+    },
+    {
+      unique: true,
+      fields: ['email']
+    }
+  ]
 });
-
-// 同步数据库模型
-sequelize.sync({ alter: true })
-  .then(() => {
-    console.log('用户表同步成功');
-  })
-  .catch(err => {
-    console.error('用户表同步失败:', err);
-  });
 
 module.exports = User;
