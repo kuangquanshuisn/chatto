@@ -1,26 +1,41 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const User = require('./User');
 
 const Message = sequelize.define('messages', {
   id: {
-    type: DataTypes.BIGINT,
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
-    autoIncrement: true,
     comment: '消息ID'
   },
-  user_id: {
-    type: DataTypes.BIGINT,
+  chat_id: {
+    type: DataTypes.UUID,
     allowNull: false,
+    comment: '聊天记录ID',
+    references: {
+      model: 'chat_lists',
+      key: 'id',
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
+    }
+  },
+  user_code: {
+    type: DataTypes.STRING(32),
+    allowNull: false,
+    comment: '用户编码',
     references: {
       model: 'users',
-      key: 'id'
-    },
-    comment: '用户ID'
+      key: 'user_code',
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
+    }
   },
   content: {
     type: DataTypes.TEXT,
     allowNull: false,
+    validate: {
+      notEmpty: true
+    },
     comment: '消息内容'
   },
   is_ai: {
@@ -28,6 +43,11 @@ const Message = sequelize.define('messages', {
     allowNull: false,
     defaultValue: false,
     comment: '是否为AI回复'
+  },
+  model: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: 'AI模型名称'
   },
   created_at: {
     type: DataTypes.DATE,
@@ -37,22 +57,18 @@ const Message = sequelize.define('messages', {
 }, {
   tableName: 'messages',
   timestamps: false,
-  schema: 'public'
+  schema: 'public',
+  indexes: [
+    {
+      fields: ['chat_id']
+    },
+    {
+      fields: ['user_code']
+    },
+    {
+      fields: ['created_at']
+    }
+  ]
 });
-
-// 建立与User模型的关联
-Message.belongsTo(User, {
-  foreignKey: 'user_id',
-  as: 'user'
-});
-
-// 同步数据库模型
-sequelize.sync({ alter: true })
-  .then(() => {
-    console.log('消息表同步成功');
-  })
-  .catch(err => {
-    console.error('消息表同步失败:', err);
-  });
 
 module.exports = Message;

@@ -4,6 +4,7 @@ require('dotenv').config();
 const messageController = require('./controllers/messageController');
 const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
+const { initDatabase, checkDatabaseConnection } = require('./config/init');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -36,6 +37,27 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// 在应用启动时初始化数据库
+async function startServer() {
+  try {
+    // 首先检查数据库连接
+    const isConnected = await checkDatabaseConnection();
+    if (!isConnected) {
+      console.error('无法连接到数据库，应用启动失败');
+      process.exit(1);
+    }
+
+    // 初始化数据库
+    await initDatabase();
+    
+    // 启动应用服务器
+    app.listen(port, () => {
+      console.log(`服务器运行在端口 ${port}`);
+    });
+  } catch (error) {
+    console.error('应用启动失败:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
