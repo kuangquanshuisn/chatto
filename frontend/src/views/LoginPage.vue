@@ -66,6 +66,20 @@ import { authApi } from '../api/auth';
 const router = useRouter();
 const isLoading = ref(false);
 
+const formData = reactive({
+  account: '',
+  password: ''
+});
+
+// 在组件挂载时检查登录状态和自动填充用户名
+onMounted(() => {
+  const savedAccount = localStorage.getItem('account');
+  if (savedAccount) {
+    formData.account = savedAccount;
+  }
+  checkAuthStatus();
+});
+
 // 添加检查登录状态的函数
 const checkAuthStatus = () => {
   const token = localStorage.getItem('token');
@@ -73,16 +87,6 @@ const checkAuthStatus = () => {
     router.push('/chat');
   }
 };
-
-// 在组件挂载时检查登录状态
-onMounted(() => {
-  checkAuthStatus();
-});
-
-const formData = reactive({
-  account: '',
-  password: ''
-});
 
 const errors = reactive({
   account: '',
@@ -133,6 +137,8 @@ const handleLogin = async () => {
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       localStorage.setItem('userCode', response.user.userCode);
+      // 保存用户名
+      localStorage.setItem('account', formData.account);
       
       // 跳转到聊天页面
       router.push('/chat');
