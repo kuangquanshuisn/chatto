@@ -172,7 +172,7 @@ exports.login = async (req, res) => {
         ]
       },
       attributes: {
-        include: ['password'] // 确保包含密码字段
+        include: ['password', 'user_code'] // 确保包含密码和user_code字段
       }
     });
 
@@ -207,7 +207,8 @@ exports.login = async (req, res) => {
         id: user.id,
         username: user.username,
         phone: user.phone,
-        status: user.status
+        status: user.status,
+        userCode: user.user_code // 映射为userCode
       }
     });
   } catch (error) {

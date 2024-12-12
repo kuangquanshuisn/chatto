@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const { v4: uuidv4 } = require('uuid'); // 引入uuid库
 
 const User = sequelize.define('users', {
   id: {
@@ -7,6 +8,13 @@ const User = sequelize.define('users', {
     primaryKey: true,
     autoIncrement: true,
     comment: '用户ID'
+  },
+  user_code: { // 新增用户编码字段
+    type: DataTypes.STRING(32),
+    allowNull: false,
+    unique: true,
+    defaultValue: uuidv4().replace(/-/g, ''), // 去掉连字符
+    comment: '用户编码'
   },
   username: {
     type: DataTypes.STRING(50),

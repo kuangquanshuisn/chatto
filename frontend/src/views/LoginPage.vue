@@ -119,6 +119,7 @@ const handleLogin = async () => {
       // 保存登录状态和用户信息
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('userCode', response.user.userCode);
       
       // 跳转到聊天页面
       router.push('/chat');
