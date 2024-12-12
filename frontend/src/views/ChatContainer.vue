@@ -97,6 +97,13 @@ import { vOnClickOutside } from '@vueuse/components'
 import Message from '../components/Message.vue';
 import ChatInput from '../components/ChatInput.vue';
 import { ChevronDownIcon, PencilSquareIcon, CheckIcon, StarIcon, UserIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// 配置 dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 interface ChatMessage {
   id: string;
@@ -180,12 +187,25 @@ const loadChatHistory = async () => {
   }
 };
 
+const formatDateTime = () => {
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Shanghai'
+  }).format(new Date()).replace(/\//g, '-');
+};
+
 const saveMessage = async (content: string, isAI: boolean) => {
   const message: ChatMessage = {
     id: Date.now().toString(),
     content,
     isAI,
-    timestamp: new Date().toISOString()
+    timestamp: formatDateTime()
   };
   messages.value.push(message);
   return message;
@@ -204,7 +224,7 @@ const handleSendMessage = async (content: string) => {
       id: tempMessageId,
       content: '',
       isAI: true,
-      timestamp: new Date().toISOString()
+      timestamp: formatDateTime()
     });
 
     // Create EventSource for streaming

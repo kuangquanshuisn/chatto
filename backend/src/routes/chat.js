@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const OpenAI = require('openai');
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+
+// 配置 dayjs 使用时区插件
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -38,7 +45,7 @@ router.post('/', async (req, res) => {
         id: Date.now().toString(),
         content: content,
         isAI: true,
-        timestamp: new Date().toISOString(),
+        timestamp: dayjs().tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss'),
         done: false
       })}\n\n`);
     }
@@ -48,7 +55,7 @@ router.post('/', async (req, res) => {
       id: Date.now().toString(),
       content: fullResponse,
       isAI: true,
-      timestamp: new Date().toISOString(),
+      timestamp: dayjs().tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss'),
       done: true
     })}\n\n`);
 
