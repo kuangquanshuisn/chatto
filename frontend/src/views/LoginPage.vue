@@ -59,12 +59,25 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { authApi } from '../api/auth';
 
 const router = useRouter();
 const isLoading = ref(false);
+
+// 添加检查登录状态的函数
+const checkAuthStatus = () => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    router.push('/chat');
+  }
+};
+
+// 在组件挂载时检查登录状态
+onMounted(() => {
+  checkAuthStatus();
+});
 
 const formData = reactive({
   account: '',
