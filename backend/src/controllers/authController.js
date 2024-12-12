@@ -124,7 +124,10 @@ exports.register = async (req, res) => {
     });
 
     // 生成 token
-    const token = generateToken({ id: user.id });
+    const token = generateToken({ 
+      id: user.id,
+      user_code: user.user_code
+    });
 
     // 清除验证码
     codeStorage.removeCode(phone);
@@ -137,7 +140,8 @@ exports.register = async (req, res) => {
         id: user.id,
         username: user.username,
         phone: user.phone,
-        status: user.status
+        status: user.status,
+        userCode: user.user_code
       }
     });
   } catch (error) {
@@ -197,7 +201,10 @@ exports.login = async (req, res) => {
     }
 
     // 生成 token
-    const token = generateToken({ id: user.id });
+    const token = generateToken({ 
+      id: user.id,
+      user_code: user.user_code
+    });
 
     res.json({
       success: true,
@@ -208,7 +215,7 @@ exports.login = async (req, res) => {
         username: user.username,
         phone: user.phone,
         status: user.status,
-        userCode: user.user_code // 映射为userCode
+        userCode: user.user_code
       }
     });
   } catch (error) {
