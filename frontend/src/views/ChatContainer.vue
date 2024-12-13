@@ -1,92 +1,128 @@
 <template>
-  <div class="flex flex-col h-[100dvh]">
-    <!-- 头部 -->
-    <header class="flex-none border-b border-gray-200">
-      <div class="flex items-center justify-between px-4 py-2">
-        <div class="flex items-center space-x-2 relative">
-          <button 
-            @click="isModelSelectOpen = !isModelSelectOpen"
-            class="flex items-center space-x-2 hover:bg-gray-100 px-2 py-1 rounded-lg"
-          >
-            <span class="font-medium">{{ selectedModel }}</span>
-            <ChevronDownIcon class="h-4 w-4 text-gray-500" />
-          </button>
-
-          <!-- 模型选择弹窗 -->
-          <div 
-            v-if="isModelSelectOpen"
-            v-on-click-outside="() => isModelSelectOpen = false"
-            class="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
-          >
-            <button
-              v-for="model in models"
-              :key="model"
-              @click="selectModel(model)"
-              class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between"
-              :class="{ 'bg-gray-50': model === selectedModel }"
-            >
-              <span>{{ model }}</span>
-              <CheckIcon v-if="model === selectedModel" class="h-4 w-4 text-blue-500" />
-            </button>
-          </div>
+  <div class="flex h-[100dvh] relative">
+    <!-- 会话列表侧边栏 -->
+    <div
+      class="absolute inset-y-0 left-0 w-64 bg-white border-r border-gray-200 transform transition-transform"
+      :class="{ '-translate-x-full': !isChatsOpen }"
+    >
+      <div class="flex flex-col h-full">
+        <div class="p-4 border-b border-gray-200">
+          <h2 class="text-lg font-medium">会话列表</h2>
         </div>
-        <div class="flex items-center space-x-2 relative">
-          <button 
-            class="p-2 hover:bg-gray-100 rounded-lg"
+        <div class="flex-1 overflow-y-auto">
+          <div
+            v-for="chat in chatLists"
+            :key="chat.id"
+            @click="selectChat(chat)"
+            class="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+            :class="{ 'bg-gray-50 rounded-lg': selectedChat?.id === chat.id }"
           >
-            <PencilSquareIcon class="h-5 w-5 text-gray-500" />
-          </button>
-          <div  
-            @click="isAvatarMenuOpen = !isAvatarMenuOpen" 
-            class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white cursor-pointer"
-          >
-            U
-          </div>
-
-          <!-- 头像菜单弹窗 -->
-          <div 
-            v-if="isAvatarMenuOpen"
-            v-on-click-outside="() => isAvatarMenuOpen = false"
-            class="absolute top-full right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
-          >
-            <button class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center">
-              <StarIcon class="h-5 w-5 text-gray-500 mr-2" />
-              积分
-            </button>
-            <button 
-              @click="handleProfile"
-              class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center"
-            >
-              <UserIcon class="h-5 w-5 text-gray-500 mr-2" />
-              我的
-            </button>
-            <button 
-              type="button" 
-              @click="handleLogout" 
-              class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center"
-            >
-              <ArrowLeftIcon class="h-5 w-5 text-gray-500 mr-2" />
-              退出
-            </button>
+            {{ chat.title }}
           </div>
         </div>
       </div>
-    </header>
-
-    <div class="flex-1 overflow-y-auto bg-gray-50 min-h-0">
-      <Message
-        v-for="message in messages"
-        :key="message.id"
-        :content="message.content"
-        :isAI="message.isAI"
-        :timestamp="message.timestamp"
-        :model="message.model"
-      />
-      <div ref="messagesEndRef" />
     </div>
 
-    <div class="flex-none">
-      <ChatInput :onSendMessage="handleSendMessage" />
+    <!-- 主对话区域 -->
+    <div 
+      class="flex-1 flex flex-col transition-all duration-200 w-full"
+      :class="{ 'ml-64': isChatsOpen }"
+    >
+      <!-- 头部 -->
+      <header class="flex-none border-b border-gray-200">
+        <div class="flex items-center justify-between px-4 py-2">
+          <div class="flex items-center space-x-2 relative">
+            <button
+              @click="isChatsOpen = !isChatsOpen"
+              class="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <Bars3Icon class="h-5 w-5 text-gray-500" />
+            </button>
+
+            <button 
+              @click="isModelSelectOpen = !isModelSelectOpen"
+              class="flex items-center space-x-2 hover:bg-gray-100 px-2 py-1 rounded-lg"
+            >
+              <span class="font-medium">{{ selectedModel }}</span>
+              <ChevronDownIcon class="h-4 w-4 text-gray-500" />
+            </button>
+
+            <!-- 模型选择弹窗 -->
+            <div 
+              v-if="isModelSelectOpen"
+              v-on-click-outside="() => isModelSelectOpen = false"
+              class="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+            >
+              <button
+                v-for="model in models"
+                :key="model"
+                @click="selectModel(model)"
+                class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between"
+                :class="{ 'bg-gray-50': model === selectedModel }"
+              >
+                <span>{{ model }}</span>
+                <CheckIcon v-if="model === selectedModel" class="h-4 w-4 text-blue-500" />
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 relative">
+            <button 
+              class="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <PencilSquareIcon class="h-5 w-5 text-gray-500" />
+            </button>
+            <div  
+              @click="isAvatarMenuOpen = !isAvatarMenuOpen" 
+              class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white cursor-pointer"
+            >
+              U
+            </div>
+
+            <!-- 头像菜单弹窗 -->
+            <div 
+              v-if="isAvatarMenuOpen"
+              v-on-click-outside="() => isAvatarMenuOpen = false"
+              class="absolute top-full right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+            >
+              <button class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center">
+                <StarIcon class="h-5 w-5 text-gray-500 mr-2" />
+                积分
+              </button>
+              <button 
+                @click="handleProfile"
+                class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center"
+              >
+                <UserIcon class="h-5 w-5 text-gray-500 mr-2" />
+                我的
+              </button>
+              <button 
+                type="button" 
+                @click="handleLogout" 
+                class="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center"
+              >
+                <ArrowLeftIcon class="h-5 w-5 text-gray-500 mr-2" />
+                退出
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="flex-1 overflow-y-auto bg-gray-50 min-h-0">
+        <Message
+          v-for="message in messages"
+          :key="message.id"
+          :content="message.content"
+          :isAI="message.isAI"
+          :timestamp="message.timestamp"
+          :model="message.model"
+        />
+        <div ref="messagesEndRef" />
+      </div>
+
+      <div class="flex-none">
+        <ChatInput :onSendMessage="handleSendMessage" />
+      </div>
     </div>
   </div>
 </template>
@@ -97,7 +133,7 @@ import { useRouter } from 'vue-router';
 import { vOnClickOutside } from '@vueuse/components'
 import Message from '../components/Message.vue';
 import ChatInput from '../components/ChatInput.vue';
-import { ChevronDownIcon, PencilSquareIcon, CheckIcon, StarIcon, UserIcon, ArrowLeftIcon } from '@heroicons/vue/24/outline';
+import { ChevronDownIcon, PencilSquareIcon, CheckIcon, StarIcon, UserIcon, ArrowLeftIcon, Bars3Icon, XMarkIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -114,11 +150,23 @@ interface ChatMessage {
   model?: string;
 }
 
+interface ChatList {
+  id: string;
+  title: string;
+  user_code: string;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
 const router = useRouter();
 const models = ref<string[]>([]);
 const selectedModel = ref('');
 const isModelSelectOpen = ref(false);
 const isAvatarMenuOpen = ref(false);
+const isChatsOpen = ref(false);
+const chatLists = ref<ChatList[]>([]);
+const selectedChat = ref<ChatList | null>(null);
 
 const fetchModels = async () => {
   try {
@@ -181,17 +229,35 @@ watch(messages, () => {
 
 const loadChatHistory = async () => {
   try {
-    const token = localStorage.getItem('token'); // 获取token
+    const token = localStorage.getItem('token');
     const response = await fetch('http://localhost:3000/api/chat/chat-lists', {
       headers: {
-        'Authorization': `Bearer ${token}` // 添加Authorization请求头
+        'Authorization': `Bearer ${token}`
       }
     });
-    const history = await response.json();
-    messages.value = history;
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Loaded chat lists:', data);
+      chatLists.value = Array.isArray(data) ? data : (data.chatLists || []);
+      console.log('Processed chat lists:', chatLists.value);
+      
+      if (chatLists.value.length > 0 && !selectedChat.value) {
+        selectedChat.value = chatLists.value[0];
+        // TODO: 加载选中会话的消息
+      }
+    } else if (response.status === 401) {
+      router.push('/login');
+    }
   } catch (error) {
     console.error('Error loading chat history:', error);
   }
+};
+
+const selectChat = (chat: ChatList) => {
+  selectedChat.value = chat;
+  isChatsOpen.value = false;
+  // TODO: 加载选中会话的消息
 };
 
 const formatDateTime = () => {
@@ -304,9 +370,60 @@ const handleSendMessage = async (content: string) => {
   }
 };
 
+const deleteChat = async (chatId: string) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://localhost:3000/api/chat/chat-lists/${chatId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      // 从列表中移除被删除的会话
+      chatLists.value = chatLists.value.filter(chat => chat.id !== chatId);
+      // 如果删除的是当前选中的会话，清除选中状态
+      if (selectedChat.value?.id === chatId) {
+        selectedChat.value = null;
+        messages.value = [];
+      }
+    } else if (response.status === 401) {
+      router.push('/login');
+    }
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+  }
+};
+
 // 在组件挂载时加载聊天历史记录
 onMounted(async () => {
   await fetchModels();
   loadChatHistory();
 });
 </script>
+
+<style scoped>
+/* 添加过渡动画 */
+.transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* 添加会话项的 hover 样式 */
+.hover\:bg-gray-50:hover .opacity-0 {
+  opacity: 1;
+}
+
+/* 确保标题不会过长 */
+.truncate {
+  max-width: calc(100% - 2rem);
+}
+</style>
