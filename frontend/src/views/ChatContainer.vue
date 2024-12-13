@@ -181,7 +181,12 @@ watch(messages, () => {
 
 const loadChatHistory = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/chat/history');
+    const token = localStorage.getItem('token'); // 获取token
+    const response = await fetch('http://localhost:3000/api/chat/chat-lists', {
+      headers: {
+        'Authorization': `Bearer ${token}` // 添加Authorization请求头
+      }
+    });
     const history = await response.json();
     messages.value = history;
   } catch (error) {
@@ -232,10 +237,12 @@ const handleSendMessage = async (content: string) => {
     });
 
     // Create EventSource for streaming
+    const token = localStorage.getItem('token');
     const response = await fetch('http://localhost:3000/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` // 添加token验证
       },
       body: JSON.stringify({
         message: content,
