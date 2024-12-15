@@ -312,7 +312,8 @@ const handleSendMessage = async (content: string) => {
       },
       body: JSON.stringify({
         message: content,
-        model: selectedModel.value
+        model: selectedModel.value,
+        chatId: selectedChat.value?.id // 添加选中chatList的chatId
       }),
     });
 

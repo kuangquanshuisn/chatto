@@ -21,7 +21,22 @@ router.use(authenticateToken);
 // Chat endpoint
 router.post('/', async (req, res) => {
   try {
-    const { message, model = 'gpt-4o-mini' } = req.body;
+    const { message, model = 'gpt-4o-mini', chatId } = req.body;
+    const user_code = req.user.user_code;
+
+    // 验证必需的参数
+    if (!message || !chatId) {
+      return res.status(400).json({ error: '缺少必要参数' });
+    }
+
+    // 先保存用户的消息
+    await Message.create({
+      chat_id: chatId,
+      user_code: user_code,
+      content: message,
+      is_ai: false,
+      created_at: dayjs().tz('Asia/Shanghai').toDate()
+    });
 
     // Set headers for SSE
     res.setHeader('Content-Type', 'text/event-stream');
@@ -52,6 +67,16 @@ router.post('/', async (req, res) => {
       })}\n\n`);
     }
 
+    // 保存 AI 的完整回复
+    await Message.create({
+      chat_id: chatId,
+      user_code: user_code,
+      content: fullResponse,
+      is_ai: true,
+      model: model,
+      created_at: dayjs().tz('Asia/Shanghai').toDate()
+    });
+
     // Send the final message indicating completion
     res.write(`data: ${JSON.stringify({
       id: Date.now().toString(),
@@ -61,6 +86,12 @@ router.post('/', async (req, res) => {
       timestamp: dayjs().tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss'),
       done: true
     })}\n\n`);
+
+    // 更新聊天列表的更新时间
+    await ChatList.update(
+      { updated_at: dayjs().tz('Asia/Shanghai').toDate() },
+      { where: { id: chatId } }
+    );
 
     res.end();
   } catch (error) {
@@ -111,6 +142,27 @@ router.get('/chat-lists', async (req, res) => {
   } catch (error) {
     console.error('获取聊天列表失败:', error);
     res.status(500).json({ error: '获取聊天列表失败' });
+  }
+});
+
+// 添加获取特定聊天记录的路由
+router.get('/messages/:chatId', async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const user_code = req.user.user_code;
+
+    const messages = await Message.findAll({
+      where: { 
+        chat_id: chatId,
+        user_code: user_code 
+      },
+      order: [['created_at', 'ASC']]
+    });
+
+    res.json(messages);
+  } catch (error) {
+    console.error('获取聊天记录失败:', error);
+    res.status(500).json({ error: '获取聊天记录失败' });
   }
 });
 
