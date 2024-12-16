@@ -254,10 +254,30 @@ const loadChatHistory = async () => {
   }
 };
 
+const loadMessagesForChat = async (chatId: string) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`http://localhost:3000/api/chat/messages/${chatId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      messages.value = data; // 更新消息列表
+    } else if (response.status === 401) {
+      router.push('/login');
+    }
+  } catch (error) {
+    console.error('Error loading messages for chat:', error);
+  }
+};
+
 const selectChat = (chat: ChatList) => {
   selectedChat.value = chat;
   isChatsOpen.value = false;
-  // TODO: 加载选中会话的消息
+  loadMessagesForChat(chat.id); // 加载选中会话的消息
 };
 
 const formatDateTime = () => {
@@ -400,7 +420,10 @@ const deleteChat = async (chatId: string) => {
 // 在组件挂载时加载聊天历史记录
 onMounted(async () => {
   await fetchModels();
-  loadChatHistory();
+  await loadChatHistory();
+  if (selectedChat.value) {
+    await loadMessagesForChat(selectedChat.value.id); // 加载默认选中会话的消息
+  }
 });
 </script>
 

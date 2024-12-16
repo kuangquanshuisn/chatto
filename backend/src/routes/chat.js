@@ -159,7 +159,16 @@ router.get('/messages/:chatId', async (req, res) => {
       order: [['created_at', 'ASC']]
     });
 
-    res.json(messages);
+    // 格式化返回的消息
+    const formattedMessages = messages.map(message => ({
+      id: message.id, // 假设 Message 模型有 id 字段
+      content: message.content,
+      isAI: message.is_ai,
+      model: message.model || 'unknown', // 如果没有模型信息，提供默认值
+      timestamp: dayjs(message.created_at).tz('Asia/Shanghai').format('YYYY-MM-DD HH:mm:ss'),
+    }));
+
+    res.json(formattedMessages);
   } catch (error) {
     console.error('获取聊天记录失败:', error);
     res.status(500).json({ error: '获取聊天记录失败' });
